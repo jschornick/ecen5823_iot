@@ -1,0 +1,9 @@
+*.o
+*.d
+*.hex
+*.bin
+*.s37
+*.map
+*.axf
+*.a
+BgBuild_Log.txt
