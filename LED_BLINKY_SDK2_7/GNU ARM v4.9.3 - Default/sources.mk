@@ -20,6 +20,7 @@ hardware/kit/common/bsp \
 hardware/kit/common/drivers \
 platform/Device/SiliconLabs/EFR32BG1B/Source/GCC \
 platform/Device/SiliconLabs/EFR32BG1B/Source \
+platform/emdrv/dmadrv/src \
 platform/emdrv/sleep/src \
 platform/emdrv/tempdrv/src \
 platform/emlib/src \
