@@ -14,11 +14,13 @@
 
 void letimer_init(void) {
 
-	// TODO: set oscillator based on config macro
-	//   EM2 : LXFO   = 32678 Hz
-	//   EM3 : ULFRCO = 10000 Hz
-	CMU_OscillatorEnable(cmuOsc_LFXO, true, true);  // enable LFXO, block until stable
-	CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);  // LFA branch uses LFXO
+#if LETIMER_USES_ULFRCO
+	CMU_OscillatorEnable(cmuOsc_ULFRCO, true, true);    // enable ultra low freq oscillator
+	CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_ULFRCO);
+#else
+	CMU_OscillatorEnable(cmuOsc_LFXO, true, true);      // enable LFXO, block until stable
+	CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);   // LFA branch uses LFXO
+#endif
 
 	// TODO: set divisor based on period
 	CMU_ClockDivSet(cmuClock_LFA, 0);
@@ -26,9 +28,10 @@ void letimer_init(void) {
 	CMU_ClockEnable(cmuClock_CORELE, true);
 	CMU_ClockEnable(cmuClock_LETIMER0, true);
 
+	// TODO: set based on configured frequency, target period, and target on time
 	//LETIMER0->COMP0 = 0xdead;
-	LETIMER_CompareSet(LETIMER0, 0, 0xdead);  // COMP0, defines period of timer
-	LETIMER_CompareSet(LETIMER0, 1, 0x1000);  //
+	LETIMER_CompareSet(LETIMER0, 0, 0x2000);  // COMP0, defines period of timer
+	LETIMER_CompareSet(LETIMER0, 1, 0x0800);  //
 
 	const LETIMER_Init_TypeDef config = {
 	  .enable         = false,               // Don't start counting after init
@@ -50,8 +53,6 @@ void letimer_init(void) {
 	LETIMER_IntClear(LETIMER0, LETIMER_IEN_COMP0 | LETIMER_IEN_COMP1);
 	LETIMER_IntEnable(LETIMER0, LETIMER_IEN_COMP0| LETIMER_IEN_COMP1);
 
-
-	// TODO: set based on timer sleep macro
 	block_sleep_mode(LETIMER_LOWEST_ENERGY_MODE+1);
 
 	// NVIC

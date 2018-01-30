@@ -4,6 +4,7 @@
 // Toolchain   : GNU ARM v4.9.3
 
 #include "led.h"
+#include "gpio.h"
 #include "em_gpio.h"
 
 void led_init(void) {

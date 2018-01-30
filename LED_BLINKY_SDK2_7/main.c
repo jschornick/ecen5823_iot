@@ -94,7 +94,6 @@ uint8_t boot_to_dfu = 0;
 
 int main(void)
 {
-  int i;
 
   // Initialize device
   initMcu();

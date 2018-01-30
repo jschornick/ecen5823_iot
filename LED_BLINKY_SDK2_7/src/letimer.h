@@ -7,14 +7,15 @@
 #define __LETIMER_H
 
 // Lowest energy mode the LE timer is allowed to use
-// (e.g., when set to EM2, the LE timer won't go into EM3)
-#define LETIMER_LOWEST_ENERGY_MODE EM2
+// (e.g., when set to 2, the LE timer won't go into EM3)
+#define LETIMER_LOWEST_ENERGY_MODE 2
 
 
-#if LETIMER_LOWEST_ENERGY_MODE == EM3
-#define LETIMER_OSC ULFRCO
+#if LETIMER_LOWEST_ENERGY_MODE == 3
+  #define LETIMER_USES_ULFRCO 1
+  #define LETIMER_FREQ  1000
 #else
-#define LETIMER_OSC LFXO
+  #define LETIMER_FREQ  32768
 #endif
 
 void letimer_init(void);
