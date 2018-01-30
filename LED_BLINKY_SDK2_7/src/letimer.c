@@ -22,16 +22,36 @@ void letimer_init(void) {
 	CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);   // LFA branch uses LFXO
 #endif
 
+	// comp0 = ((period  * freq)/1000) / div
+	// comp1 = ((on_time * freq)/1000) / div
+
+	// div = 2^prescale
+
+	uint32_t period_ticks = (BLINK_PERIOD_MS * LETIMER_CLK_FREQ) / 1000;
+	uint32_t on_time_ticks = (BLINK_ON_TIME_MS * LETIMER_CLK_FREQ) / 1000;
+
+	CMU_ClkDiv_TypeDef prescale = 1;
+
+	// calculate timer prescaler
+	while ( period_ticks > 0xffff ) {
+		// we're larger than the maximum timer period, so up the dividers
+		period_ticks /= 2;
+		on_time_ticks /= 2;
+		prescale *= 2;
+	}
+
 	// TODO: set divisor based on period
-	CMU_ClockDivSet(cmuClock_LFA, 0);
+	//CMU_ClockDivSet(cmuClock_LFA, prescale);
+	CMU_ClockDivSet(cmuClock_LETIMER0, prescale);
+
 
 	CMU_ClockEnable(cmuClock_CORELE, true);
 	CMU_ClockEnable(cmuClock_LETIMER0, true);
 
 	// TODO: set based on configured frequency, target period, and target on time
 	//LETIMER0->COMP0 = 0xdead;
-	LETIMER_CompareSet(LETIMER0, 0, 0x2000);  // COMP0, defines period of timer
-	LETIMER_CompareSet(LETIMER0, 1, 0x0800);  //
+	LETIMER_CompareSet(LETIMER0, 0, period_ticks);  // COMP0, defines period of timer
+	LETIMER_CompareSet(LETIMER0, 1, on_time_ticks);  //
 
 	const LETIMER_Init_TypeDef config = {
 	  .enable         = false,               // Don't start counting after init
@@ -66,7 +86,8 @@ void letimer_init(void) {
 void LETIMER0_IRQHandler(void) {
 	uint32_t intr_flags;  // interrupt flags
 
-	CORE_ATOMIC_IRQ_DISABLE();
+	// Not strictly necessary since we execute in a fraction of the time between interrupts
+	//CORE_ATOMIC_IRQ_DISABLE();
 
 	intr_flags = LETIMER_IntGet(LETIMER0); // record pending interrupts
 	LETIMER_IntClear(LETIMER0, intr_flags);
@@ -78,5 +99,5 @@ void LETIMER0_IRQHandler(void) {
 		led_on(LED0);
 	}
 
-	CORE_ATOMIC_IRQ_ENABLE();
+	//CORE_ATOMIC_IRQ_ENABLE();
 }

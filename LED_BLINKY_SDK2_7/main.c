@@ -88,10 +88,6 @@ uint8_t boot_to_dfu = 0;
 #include "letimer.h"
 
 
-#define LED_BLINK_PERIOD    1.0  // in seconds??
-#define LED_BLINK_ON_TIME   0.2  // 200 ms
-
-
 int main(void)
 {
 
