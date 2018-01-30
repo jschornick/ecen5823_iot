@@ -64,7 +64,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/platform/Device/SiliconLabs/EFR32BG1B/Source/GCC}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/platform/Device/SiliconLabs/EFR32BG1B/Source}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/platform/bootloader}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;/${StudioToolchainPath}/lib/gcc/arm-none-eabi/4.9.3/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${StudioToolchainPath}/lib/gcc/arm-none-eabi/4.9.3/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LED_BLINKY_SDK2_7/src}&quot;"/>
 								</option>
 								<option id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.def.symbols.869503051" name="Defined symbols (-D)" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.def.symbols" valueType="definedSymbols">
