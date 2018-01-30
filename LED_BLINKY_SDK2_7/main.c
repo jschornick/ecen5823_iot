@@ -112,22 +112,15 @@ int main(void)
   // Initialize stack and BGAPI using the example configuration from Silicon Labs
   gecko_init(&config);
 
-  letimer_init();
-
   //  GPIO_PinOutSet(LED0_port, LED0_pin);
   //  GPIO_PinOutSet(LED1_port, LED1_pin);
-  led_on(LED0);
-  led_on(LED1);
+  led_off(LED0);
+  led_off(LED1);
+
+  // Setup everything for the low-energy timer and start it
+  letimer_init();
 
   while (1) {
-	  for (i = 0; i < 500000; i++);
-	  //GPIO_PinOutClear(LED0_port, LED0_pin);
-	  led_off(LED0);
-
-	  for (i = 0; i < 500000; i++);
-	  //GPIO_PinOutClear(LED1_port, LED1_pin);
-	  led_off(LED1);
-
 	  sleep();
   }
 }

@@ -23,18 +23,41 @@ void letimer_init(void) {
 	// TODO: set divisor based on period
 	CMU_ClockDivSet(cmuClock_LFA, 0);
 
+	CMU_ClockEnable(cmuClock_CORELE, true);
 	CMU_ClockEnable(cmuClock_LETIMER0, true);
+
+	//LETIMER0->COMP0 = 0xdead;
+	LETIMER_CompareSet(LETIMER0, 0, 0xdead);  // COMP0, defines period of timer
+	LETIMER_CompareSet(LETIMER0, 1, 0x1000);  //
+
+	const LETIMER_Init_TypeDef config = {
+	  .enable         = false,               // Don't start counting after init
+	  .debugRun       = false,               // Counter runs during debug halt
+	  .comp0Top       = true,                // Load COMP0 into CNT on underflow
+	  .bufTop         = false,               // Don't load COMP1 into COMP0 when REP0 reaches 0
+	  .out0Pol        = 0,                   // Idle value for output 0
+	  .out1Pol        = 0,                   // Idle value for output 1
+	  .ufoa0          = letimerUFOANone,     // No action on underflow
+	  .ufoa1          = letimerUFOANone,     // No action on underflow
+	  .repMode        = letimerRepeatFree    // Free run, repeat until stopped
+	};
+
+	// apply the configuration to LETIMER0
+	LETIMER_Init(LETIMER0, &config);
+
+
+	// IEN
+	LETIMER_IntClear(LETIMER0, LETIMER_IEN_COMP0 | LETIMER_IEN_COMP1);
+	LETIMER_IntEnable(LETIMER0, LETIMER_IEN_COMP0| LETIMER_IEN_COMP1);
+
 
 	// TODO: set based on timer sleep macro
 	block_sleep_mode(LETIMER_LOWEST_ENERGY_MODE+1);
 
-
-	// COMP0
-	// COMP1
-	// IEN
 	// NVIC
+	NVIC_EnableIRQ(LETIMER0_IRQn);
 
-	// LETIMER0->CMD = LETIMER_CMD_START
+	LETIMER_Enable(LETIMER0, true);  // emlib command that calls: LETIMER0->CMD = LETIMER_CMD_START
 
 }
 
