@@ -1,6 +1,14 @@
+// File        : letimer.c
+// Description : Low-energy timer (LETIMER) initialization and ISR
+// Author      : Jeff Schornick
+// Toolchain   : GNU ARM v4.9.3
+// Attribution : This file uses code from the "Silicon Labs Empty Example Project" as indicated.
+
+
+
+
 /***********************************************************************************************//**
- * \file   main.c
- * \brief  Silicon Labs Empty Example Project
+ * Silicon Labs Empty Example Project
  *
  * This example demonstrates the bare minimum needed for a Blue Gecko C application
  * that allows Over-the-Air Device Firmware Upgrading (OTA DFU). The application
@@ -37,15 +45,6 @@
 #include "bspconfig.h"
 #endif
 
-/***********************************************************************************************//**
- * @addtogroup Application
- * @{
- **************************************************************************************************/
-
-/***********************************************************************************************//**
- * @addtogroup app
- * @{
- **************************************************************************************************/
 
 #ifndef MAX_CONNECTIONS
 #define MAX_CONNECTIONS 4
@@ -72,47 +71,29 @@ static const gecko_configuration_t config = {
 
 // Flag for indicating DFU Reset must be performed
 uint8_t boot_to_dfu = 0;
+
+
+// End of Silicon Labs example configuration
+
+
 //***********************************************************************************
 // Include files
 //***********************************************************************************
 
-#include "main.h"
+//#include "main.h"
 #include "gpio.h"
 #include "cmu.h"
 
-//***********************************************************************************
-// defined files
-//***********************************************************************************
+#include "src/sleep.h" // make sure we include our custom sleep.h, not the one from emdrv
 
 
-//***********************************************************************************
-// global variables
-//***********************************************************************************
-
-
-//***********************************************************************************
-// function prototypes
-//***********************************************************************************
-
-
-//***********************************************************************************
-// functions
-//***********************************************************************************
-
-
-//***********************************************************************************
-// main
-//***********************************************************************************
-
-/**
- * @brief  Main function
- */
 int main(void)
 {
   int i;
 
   // Initialize device
   initMcu();
+
   // Initialize board
   initBoard();
 
@@ -122,22 +103,21 @@ int main(void)
   // Initialize clocks
   cmu_init();
 
-  // Initialize stack
+  // Initialize stack and BGAPI using the example configuration from Silicon Labs
   gecko_init(&config);
 
+  block_sleep_mode(EM3);
+
+  GPIO_PinOutSet(LED0_port, LED0_pin);
+  GPIO_PinOutSet(LED1_port, LED1_pin);
 
   while (1) {
-		for (i = 0; i < 500000; i++);
 		GPIO_PinOutClear(LED0_port, LED0_pin);
 
 		for (i = 0; i < 500000; i++);
 		GPIO_PinOutClear(LED1_port, LED1_pin);
 
-		for (i = 0; i < 1000000; i++);
-		GPIO_PinOutSet(LED0_port, LED0_pin);
-		GPIO_PinOutSet(LED1_port, LED1_pin);
+		sleep();
   }
 }
 
-/** @} (end addtogroup app) */
-/** @} (end addtogroup Application) */
