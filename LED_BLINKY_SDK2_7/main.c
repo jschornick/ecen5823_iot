@@ -4,8 +4,7 @@
 // Toolchain   : GNU ARM v4.9.3
 // Attribution : This file uses code from the "Silicon Labs Empty Example Project" as indicated.
 
-
-
+// NB: The low-energy timer configuration (minimum energy mode, etc) is in letimer.h
 
 /***********************************************************************************************//**
  * Silicon Labs Empty Example Project
@@ -81,10 +80,16 @@ uint8_t boot_to_dfu = 0;
 //***********************************************************************************
 
 //#include "main.h"
-#include "gpio.h"
 #include "cmu.h"
+#include "gpio.h"
+#include "led.h"
 
 #include "src/sleep.h" // make sure we include our custom sleep.h, not the one from emdrv
+#include "letimer.h"
+
+
+#define LED_BLINK_PERIOD    1.0  // in seconds??
+#define LED_BLINK_ON_TIME   0.2  // 200 ms
 
 
 int main(void)
@@ -97,27 +102,33 @@ int main(void)
   // Initialize board
   initBoard();
 
-  /* Initialize GPIO */
-  gpio_init();
-
   // Initialize clocks
-  cmu_init();
+  //cmu_init();
+
+  /* Initialize GPIO */
+  led_init();
+
 
   // Initialize stack and BGAPI using the example configuration from Silicon Labs
   gecko_init(&config);
 
-  block_sleep_mode(EM3);
+  letimer_init();
 
-  GPIO_PinOutSet(LED0_port, LED0_pin);
-  GPIO_PinOutSet(LED1_port, LED1_pin);
+  //  GPIO_PinOutSet(LED0_port, LED0_pin);
+  //  GPIO_PinOutSet(LED1_port, LED1_pin);
+  led_on(LED0);
+  led_on(LED1);
 
   while (1) {
-		GPIO_PinOutClear(LED0_port, LED0_pin);
+	  for (i = 0; i < 500000; i++);
+	  //GPIO_PinOutClear(LED0_port, LED0_pin);
+	  led_off(LED0);
 
-		for (i = 0; i < 500000; i++);
-		GPIO_PinOutClear(LED1_port, LED1_pin);
+	  for (i = 0; i < 500000; i++);
+	  //GPIO_PinOutClear(LED1_port, LED1_pin);
+	  led_off(LED1);
 
-		sleep();
+	  sleep();
   }
 }
 
