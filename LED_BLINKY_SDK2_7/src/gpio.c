@@ -7,9 +7,8 @@
 #include "em_gpio.h"
 #include "gpio.h"
 
-//***********************************************************************************
-// functions
-//***********************************************************************************
 void gpio_init(void){
+	// Generic configuration for all GPIOs. The entire GPIO subsystem
+	// runs off of a single clock source.
 	CMU_ClockEnable(cmuClock_GPIO, true);
 }

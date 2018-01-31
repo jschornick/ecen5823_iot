@@ -9,9 +9,12 @@
 
 void led_init(void) {
 
+	// GPIOs are used to drive the LEDs, make sure they are ready to use.
 	gpio_init();
 
-	// Set LED ports to be standard output drive with default off (cleared)
+	// Use GPIOs in a push-pull configuration to act as direct led drivers.
+	// Current is limited by a series resistor, so drive strength setting
+	// is not critical.
 	GPIO_DriveStrengthSet(LED0_port, gpioDriveStrengthStrongAlternateStrong);
 	GPIO_PinModeSet(LED0_port, LED0_pin, gpioModePushPull, LED0_default);
 

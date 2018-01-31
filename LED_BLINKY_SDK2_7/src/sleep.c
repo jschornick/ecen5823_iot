@@ -4,15 +4,14 @@
 // Author      : Jeff Schornick
 // Toolchain   : GNU ARM v4.9.3
 
-#include "em_emu.h"  // Use the EMU_EnterEMx routines for changing energy modes
+#include "em_emu.h"   // Use the EMU_EnterEMx routines for changing energy modes
 #include "em_core.h"  // Atomic sections
 #include "sleep.h"
 
-// Define a counter for energy mode block requests.
+// Define and initialize a counter for energy mode block requests.
 // If an energy mode has block count > 0, it will not be entered during sleep.
-// NB: sleep_blocks[0] exists to keep the indexing sane, but is never used
+// NB: sleep_blocks[0] exists to keep the indexing sane, but will not be used.
 uint8_t sleep_blocks[ENERGY_MODE_MAX+1] = {0};
-
 
 // Sleep in the deepest energy mode allowed.
 // NB: the (restore = true) parameter in EM2 and EM3 is used  to restore HF
@@ -30,7 +29,6 @@ void sleep(void) {
 		// Sleep at EM3 as the lowest, never go into EM4, ~2.8 uA
 		EMU_EnterEM3(true);
 	}
-
 }
 
 void block_sleep_mode(energy_mode_t em) {

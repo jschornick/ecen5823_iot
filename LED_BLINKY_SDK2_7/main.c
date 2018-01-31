@@ -4,21 +4,18 @@
 // Toolchain   : GNU ARM v4.9.3
 // Attribution : This file uses code from the "Silicon Labs Empty Example Project" as indicated.
 
-// NB: The low-energy timer configuration (minimum energy mode, etc) is in letimer.h
+// NOTE: The timer configuration parameters (minimum energy mode, period, on time) are all
+//       defined in letimer.h
 
-/***********************************************************************************************//**
+/***********************************************************************************************
  * Silicon Labs Empty Example Project
- *
- * This example demonstrates the bare minimum needed for a Blue Gecko C application
- * that allows Over-the-Air Device Firmware Upgrading (OTA DFU). The application
- * starts advertising after boot and restarts advertising after a connection is closed.
- ***************************************************************************************************
- * <b> (C) Copyright 2016 Silicon Labs, http://www.silabs.com</b>
- ***************************************************************************************************
+ ***********************************************************************************************
+ * (C) Copyright 2016 Silicon Labs, http://www.silabs.com
+ ***********************************************************************************************
  * This file is licensed under the Silabs License Agreement. See the file
  * "Silabs_License_Agreement.txt" for details. Before using this software for
  * any purpose, you must agree to the terms of that agreement.
- **************************************************************************************************/
+ ***********************************************************************************************/
 
 /* Board headers */
 #include "init_mcu.h"
@@ -43,7 +40,6 @@
 #else
 #include "bspconfig.h"
 #endif
-
 
 #ifndef MAX_CONNECTIONS
 #define MAX_CONNECTIONS 4
@@ -71,15 +67,9 @@ static const gecko_configuration_t config = {
 // Flag for indicating DFU Reset must be performed
 uint8_t boot_to_dfu = 0;
 
+// End of Silicon Labs sample configuration
+//****************************************************************************
 
-// End of Silicon Labs example configuration
-
-
-//***********************************************************************************
-// Include files
-//***********************************************************************************
-
-//#include "main.h"
 #include "cmu.h"
 #include "gpio.h"
 #include "led.h"
@@ -87,36 +77,35 @@ uint8_t boot_to_dfu = 0;
 #include "src/sleep.h" // make sure we include our custom sleep.h, not the one from emdrv
 #include "letimer.h"
 
-
 int main(void)
 {
 
-  // Initialize device
+  // Device and board initialization
   initMcu();
-
-  // Initialize board
   initBoard();
 
   // Initialize clocks
-  //cmu_init();
-
-  /* Initialize GPIO */
-  led_init();
-
+  // cmu_init();
+  //
+  // Clocks for HW#1 are configured in the individual peripheral
+  // initialization routines.
 
   // Initialize stack and BGAPI using the example configuration from Silicon Labs
   gecko_init(&config);
 
-  //  GPIO_PinOutSet(LED0_port, LED0_pin);
-  //  GPIO_PinOutSet(LED1_port, LED1_pin);
+  /* Initialize LED via corresponding GPIOs */
+  led_init();
+
   led_off(LED0);
   led_off(LED1);
 
-  // Setup everything for the low-energy timer and start it
+  // Configure the low-energy timer and start it
   letimer_init();
 
+  // The program is entirely event driven. Sleep immediately after interrupts are serviced.
   while (1) {
 	  sleep();
   }
+
 }
 

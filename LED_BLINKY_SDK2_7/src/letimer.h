@@ -8,11 +8,11 @@
 
 // Lowest energy mode the LE timer is allowed to use
 // (e.g., when set to 2, the LE timer won't go into EM3)
-#define LETIMER_LOWEST_ENERGY_MODE 3
+#define LETIMER_LOWEST_ENERGY_MODE 0
 
 
-#define BLINK_PERIOD    3.0  // in seconds??
-#define BLINK_ON_TIME   0.075  // 75 ms
+#define BLINK_PERIOD    3.0    // 3.0 seconds
+#define BLINK_ON_TIME   0.075  // 75 milliseconds
 
 #define BLINK_PERIOD_MS ( (uint32_t) (BLINK_PERIOD * 1000) )
 #define BLINK_ON_TIME_MS ( (uint32_t) (BLINK_ON_TIME * 1000) )
