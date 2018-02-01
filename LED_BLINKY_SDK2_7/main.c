@@ -77,6 +77,16 @@ uint8_t boot_to_dfu = 0;
 #include "src/sleep.h" // make sure we include our custom sleep.h, not the one from emdrv
 #include "letimer.h"
 
+// General program operation modes for energy testing
+#define MODE_LED_ON  1
+#define MODE_LED_OFF 2
+#define MODE_BLINK   3
+
+#define MODE  MODE_BLINK
+
+// Overall lowerst energy mode. This may be raised by individual peripherals.
+#define LOWEST_ENERGY_MODE 3
+
 int main(void)
 {
 
@@ -93,14 +103,24 @@ int main(void)
   // Initialize stack and BGAPI using the example configuration from Silicon Labs
   gecko_init(&config);
 
+  // Create an overall block to force the MCU to stay in a certain energy mode.
+  block_sleep_mode(LOWEST_ENERGY_MODE+1);
+
   /* Initialize LED via corresponding GPIOs */
   led_init();
 
+#if MODE == MODE_BLINK
   led_off(LED0);
   led_off(LED1);
-
   // Configure the low-energy timer and start it
   letimer_init();
+#elif MODE == MODE_LED_ON
+  led_on(LED0);
+  led_off(LED1);
+#elif MODE == MODE_LED_OFF
+  led_off(LED0);
+  led_off(LED1);
+#endif
 
   // The program is entirely event driven. Sleep immediately after interrupts are serviced.
   while (1) {
