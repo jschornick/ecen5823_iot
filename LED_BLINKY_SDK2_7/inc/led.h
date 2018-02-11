@@ -26,6 +26,7 @@
 // LEDx_pin and LEDx_port being defined above.
 #define led_on(led)   GPIO_PinOutSet(led##_port, led##_pin);
 #define led_off(led)  GPIO_PinOutClear(led##_port, led##_pin);
+#define led_toggle(led)  GPIO_PinOutToggle(led##_port, led##_pin);
 
 // Function : led_init()
 //

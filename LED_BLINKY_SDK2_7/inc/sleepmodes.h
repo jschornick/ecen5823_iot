@@ -1,4 +1,4 @@
-// File        : sleep.h
+// File        : sleepmodes.h
 // Description : Manage energy modes by sleeping as deeply as possible based on
 //               peripheral and clock requirements
 // Author      : Jeff Schornick

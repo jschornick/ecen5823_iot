@@ -1,4 +1,4 @@
-// File        : sleep.c
+// File        : sleepmodes.c
 // Description : Manage energy modes by sleeping as deeply as possible based on
 //               peripheral and clock requirements
 // Author      : Jeff Schornick
@@ -6,7 +6,7 @@
 
 #include "em_emu.h"   // Use the EMU_EnterEMx routines for changing energy modes
 #include "em_core.h"  // Atomic sections
-#include "sleep.h"
+#include "sleepmodes.h"
 
 // Define and initialize a counter for energy mode block requests.
 // If an energy mode has block count > 0, it will not be entered during sleep.
