@@ -24,6 +24,8 @@
 
 #include "scheduler.h"
 
+#include "bsp_trace.h"
+
 // Overall lowerst energy mode. This may be raised by individual peripherals.
 #define LOWEST_ENERGY_MODE 3
 
@@ -57,6 +59,9 @@ int main(void)
 
 
   // TODO: init_i2c
+
+
+  BSP_TraceProfilerSetup();
 
   set_timer(0, 2000, TIMER_REPEAT, EVENT_SAMPLE_WAKEUP);
 
