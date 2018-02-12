@@ -32,5 +32,6 @@
 #define I2C_SDA_LOC   16
 
 void i2c_init(void);
+void i2c_disable(void);
 
 #endif /* _I2C_H */

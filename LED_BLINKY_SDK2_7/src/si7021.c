@@ -9,6 +9,8 @@
 #include "gpio.h"
 #include "i2c.h"
 
+uint16_t temperature;
+
 void si7021_init(void)
 {
 	gpio_init();
@@ -93,6 +95,10 @@ void si7021_request_temp()
 	// wait for ACK
 	while ( !(I2C0->IF & I2C_IF_ACK) ) {} ;
 
+	I2C_IntEnable(I2C0, I2C_IEN_RXDATAV);
+	// ~7ms wait during clock stretch, let interrupt handle it
+	return;
+
 	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
 	temp_msb = I2C0->RXDATA;  // auto-clears RXDATAV
 
@@ -110,3 +116,30 @@ void si7021_request_temp()
 	if( temp > 0 ) {
 	}
 }
+
+void si7021_read_temp()
+{
+	uint8_t temp_msb;
+	uint8_t temp_lsb;
+	uint16_t temp;
+
+	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
+	temp_msb = I2C0->RXDATA;  // auto-clears RXDATAV
+
+	// ack receiption of first byte
+	I2C0->CMD = I2C_CMD_ACK;
+
+	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
+	temp_lsb = I2C0->RXDATA;  // auto-clears RXDATAV
+
+	I2C0->CMD = I2C_CMD_NACK;
+	I2C0->CMD = I2C_CMD_STOP;
+
+	temperature = (temp_msb << 8) + temp_lsb;
+
+	if( temp > 0 ) {
+	}
+
+}
+
+

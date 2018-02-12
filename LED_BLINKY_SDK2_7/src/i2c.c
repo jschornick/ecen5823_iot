@@ -71,13 +71,23 @@ void i2c_init(void) {
 	//   Set when data is available in the receive buffer. Cleared automatically when the receive buffer is read.
 
 	// NOTE: if we use emlib's I2C_TransferInit(), it will enable the interrupts for us
-	I2C_IntClear(I2C0, I2C_IEN_RXDATAV);
-	I2C_IntEnable(I2C0, I2C_IEN_RXDATAV);
+
+	//I2C_IntClear(I2C0, I2C_IEN_RXDATAV);
+	I2C0->IEN = 0;
+	//I2C_IntEnable(I2C0, I2C_IEN_RXDATAV);
 
 	// Allow peripheral to interrtupt the CPU
 	NVIC_ClearPendingIRQ(I2C0_IRQn);
-	//NVIC_EnableIRQ(I2C0_IRQn);
+	NVIC_EnableIRQ(I2C0_IRQn);
 
+}
+
+void i2c_disable(void)
+{
+	GPIO_PinModeSet(I2C_SCL_PORT, I2C_SCL_PIN, gpioModeDisabled, 0);
+	GPIO_PinModeSet(I2C_SDA_PORT, I2C_SDA_PIN, gpioModeDisabled, 0);
+	CMU_ClockEnable(cmuClock_HFPER, false);
+	CMU_ClockEnable(cmuClock_I2C0, false);
 }
 
 void I2C0_IRQHandler(void) {
@@ -85,7 +95,6 @@ void I2C0_IRQHandler(void) {
 	// disable nested interrupts instead?
 	CORE_ATOMIC_IRQ_DISABLE();
 
-	led_on(LED1);
 
 	uint32_t intr_flags;  // interrupt flags
 
@@ -98,9 +107,11 @@ void I2C0_IRQHandler(void) {
 	// RXDATAV cleared automatically when the receive buffer is read.
 	//   read and set global temp variable?
 	if ( intr_flags & I2C_IF_RXDATAV ) {
+		//led_on(LED1);
+		//I2C_IntClear(I2C0, I2C_IEN_RXDATAV);
+		I2C_IntDisable(I2C0, I2C_IEN_RXDATAV);
 		event_flags |= EVENT_I2C_MSG;
 	}
-
 
 	CORE_ATOMIC_IRQ_ENABLE();
 }

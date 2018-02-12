@@ -27,6 +27,8 @@
 // Overall lowerst energy mode. This may be raised by individual peripherals.
 #define LOWEST_ENERGY_MODE 3
 
+#define LOW_TEMP_ALERT 15.0
+
 #define SENSOR_USES_LPM 1
 
 int main(void)
@@ -64,9 +66,9 @@ int main(void)
 		  if (event_flags & EVENT_SAMPLE_WAKEUP) {
 			  event_flags &= ~EVENT_SAMPLE_WAKEUP;
 			  //led_toggle(LED0);
-			  si7021_poweron();
 
               #if SENSOR_USES_LPM
+     			si7021_poweron();
 			    set_timer(1, 80, TIMER_ONCE, EVENT_SENSOR_READY);
               #else
 			    event_flags |= EVENT_SENSOR_READY;
@@ -75,26 +77,27 @@ int main(void)
 		  }
 		  if (event_flags & EVENT_SENSOR_READY) {
 			  event_flags &= ~EVENT_SENSOR_READY;
-			  // TODO: request temp over i2c
-			  //led_on(LED1);
 			  i2c_init();
-			  //set_timer(2, 25, TIMER_ONCE, EVENT_I2C_MSG);
 			  // send i2c request
-			  led_on(LED0);
+			  //led_on(LED0);
 			  block_sleep_mode(EM2);  // need EM1 to clock I2C for response
 			  //si7021_read_user_reg();
 			  si7021_request_temp();
-			  unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM3
+			  //unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM3
 
 		  }
 		  if (event_flags & EVENT_I2C_MSG) {
 			  event_flags &= ~EVENT_I2C_MSG;
-
+			  si7021_read_temp();
 			  // while (I2C_Status == i2cTransferInProgress) { sleep() };
 			  unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM3
 			  // read i2c response
 			  // handle temp reading
 			  #if SENSOR_USES_LPM
+			    // turn off i2c pins
+				//GPIO_PinModeSet(I2C_SCL_PORT, I2C_SCL_PIN, gpioModeDisabled, 0);
+				//GPIO_PinModeSet(I2C_SDA_PORT, I2C_SDA_PIN, gpioModeDisabled, 0);
+			    i2c_disable();
 			    si7021_poweroff();
 			  #endif
 		  }

@@ -28,6 +28,7 @@ void si7021_poweron(void);
 void si7021_poweroff(void);
 void si7021_request_temp();
 void si7021_read_user_reg(void);
+void si7021_read_temp(void);
 
 
 #endif /* _SI7021_H */
