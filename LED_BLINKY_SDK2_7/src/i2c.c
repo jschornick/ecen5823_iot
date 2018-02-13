@@ -1,18 +1,9 @@
 // File        : i2c.c
-// Description : I2C peripheral
+// Description : I2C peripheral enable/disable routines
 // Author      : Jeff Schornick
 // Toolchain   : GNU ARM v4.9.3
 
 #include <stdint.h>
-
-//#include "board_features.h"  // defines BGM121 (BRD4302A) features
-//#include "hal-config.h"
-//#include "bsphalconfig.h"
-//#include "em_device.h"  // EFR32BG1B232F256GM56
-
-//#include "hal-config.h"
-//#include "i2cspm.h"  // pulls in i2cspmhalconfig.h
-//#include "i2cspmhalconfig.h"  // board configuration for I2C (I2CSPM_INIT_SENSOR), reads hal-config.h
 
 #include "em_core.h"
 #include "em_cmu.h"
@@ -22,9 +13,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "scheduler.h"  // event_flags
-
 #include "si7021.h"
-#include "led.h"
 
 void i2c_init(void)
 {

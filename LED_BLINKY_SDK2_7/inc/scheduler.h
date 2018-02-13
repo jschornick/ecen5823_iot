@@ -1,11 +1,12 @@
 // File        : scheduler.h
-// Description : Simple scheduler
+// Description : Simple event-based scheduler
 // Author      : Jeff Schornick
 // Toolchain   : GNU ARM v4.9.3
 
 #ifndef _SCHEDULER_H
 #define _SCHEDULER_H
 
+// Event flags
 #define EVENT_SAMPLE_WAKEUP 0x1
 #define EVENT_SENSOR_READY  0x2
 #define EVENT_I2C_MSG       0x4

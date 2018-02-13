@@ -9,12 +9,10 @@
 #include "em_letimer.h"
 #include "led.h"   // LED definitions and output control
 #include "sleepmodes.h"
+#include "scheduler.h"
 #include "letimer.h"
 
-#include "scheduler.h"
-
 soft_timer_t soft_timers[SOFT_TIMER_MAX];
-uint8_t running_timer = 0;
 
 // set the lowest prescaler value that can count to ticks
 CMU_ClkDiv_TypeDef letimer_calc_prescaler( uint32_t ticks )

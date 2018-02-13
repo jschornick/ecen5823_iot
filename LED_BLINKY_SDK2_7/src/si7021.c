@@ -70,9 +70,6 @@ void si7021_read_user_reg()
 
 void si7021_request_temp()
 {
-
-	// TODO: make macro for read/write
-
 	// prime TX buf, wont' send until START
 	I2C0->TXDATA = (SI7021_I2C_ADDR<<1) | I2C_WRITE_OP;
 	I2C0->IFC = I2C_IF_ACK;

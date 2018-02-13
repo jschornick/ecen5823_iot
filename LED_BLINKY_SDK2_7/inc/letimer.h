@@ -42,9 +42,26 @@ typedef struct {
 
 extern soft_timer_t soft_timers[];
 
-
+// Function: letimer_init()
+//
+// Initialize the LETIMER for use
 void letimer_init(void);
+
+// Function: update_timers
+//
+// Checks the current list of soft timers and sets LETIMER to
+// trigger on the earliest timer expiration
 void update_timers(void);
-void set_timer(uint8_t num, uint16_t ticks, uint8_t mode, uint32_t flag);
+
+// Function: set_timer
+//
+// Configures a soft timer
+//
+// Params
+//   num : Soft timer identifier
+//   ms  : Timer period in milliseconds
+//   mode: Timer mode, one of TIMER_REPEAT, TIMER_ONCE, or TIMER_OFF
+//   flag: Event flag to set on expiration (0 for none)
+void set_timer(uint8_t num, uint16_t ms, uint8_t mode, uint32_t flag);
 
 #endif /* __LETIMER_H */

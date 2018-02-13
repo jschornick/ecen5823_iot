@@ -23,11 +23,43 @@
 
 #define SI7021_WARMUP_MS   80
 
+// Function: si7102_init
+//
+// One time setup for the Si7021 temperature sensor.
+// Does not power on the device.
 void si7021_init(void);
+
+// Function: si7021_poweron
+//
+// Enables the Si7021 via the SENSOR_ENABLE pin
+// A warmup period is required after poweron.
+// Should be called after init or poweroff
 void si7021_poweron(void);
+
+// Function: si7021 poweroff
+//
+// Disables the Si7021 via the SENSOR_ENABLE pin.
+// Reenable via a call to si7021_poweron().
 void si7021_poweroff(void);
+
+// Function: si7021_request_temp
+//
+// Initiates a temperature measurement over I2C
+// After this function returns, the I2C bus will be in clock stretch mode until
+// the conversion completes and the sensor allows SCL to return high (~7 ms).
 void si7021_request_temp();
+
+
+// Function: si7021_read_user_req
+//
+// Reads the si7021 user register via I2C
 void si7021_read_user_reg(void);
+
+// Function: si7021_read_temp
+//
+// Reads the result of the previously initiated temperature measurement.
+// Should be called after calling si7021_request_temp().
+// Returns the unconverted 16-bit tempcode.
 uint16_t si7021_read_temp(void);
 
 

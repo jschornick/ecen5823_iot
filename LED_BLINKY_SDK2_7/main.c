@@ -1,10 +1,13 @@
-// File        : letimer.c
-// Description : Low-energy timer (LETIMER) initialization and ISR
+// File        : main.c
+// Description : Low-power temperature alarm.
+//
+// This program uses an interrupt-triggered event loop to periodically read an
+// I2C temperature sensor, while remaining in a low-power state as much as possible.
+//
+// An LED alert is triggered when the temperature is below the configured threshold.
+//
 // Author      : Jeff Schornick
 // Toolchain   : GNU ARM v4.9.3
-
-// NOTE: The timer configuration parameters (minimum energy mode, period, on time) are all
-//       defined in letimer.h
 
 // Board and MCU initialization routines from Silicon Labs
 #include "init_mcu.h"
