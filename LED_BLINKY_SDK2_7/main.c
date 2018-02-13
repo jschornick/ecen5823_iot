@@ -22,7 +22,10 @@
 #include "letimer.h"
 #include "scheduler.h"
 
+// The low temperature alert setting, in degress Celsius
 #define LOW_TEMP_ALERT 15.0
+
+// Period between samples in milliseconds
 #define WAKEUP_PERIOD_MS  2000
 
 // Overall lowerst energy mode. This may be raised by individual peripherals.
