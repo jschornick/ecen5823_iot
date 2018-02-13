@@ -143,11 +143,7 @@ void LETIMER0_IRQHandler(void)
 {
 	uint32_t intr_flags;  // interrupt flags
 
-	// Atomics are not strictly necessary here. The ISR executes on a
-	// deterministic schedule in a fraction of the time between interrupts.
-	//CORE_ATOMIC_IRQ_DISABLE();
-
-	//uint16_t now = LETIMER0->CNT;
+	CORE_ATOMIC_IRQ_DISABLE();
 
 	// Record the pending interrupt flags and clear them to prevent an immediate
 	// retriggering of the interrupt.
@@ -180,5 +176,5 @@ void LETIMER0_IRQHandler(void)
 		update_timers();
 	}
 
-	//CORE_ATOMIC_IRQ_ENABLE();
+	CORE_ATOMIC_IRQ_ENABLE();
 }
