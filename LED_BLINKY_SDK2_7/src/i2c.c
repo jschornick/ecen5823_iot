@@ -26,11 +26,8 @@
 #include "si7021.h"
 #include "led.h"
 
-void i2c_init(void) {
-
-	// from SDK: EFR32BG1_BRD4302A/config
-	//I2CSPM_Init_TypeDef init = I2CSPM_INIT_SENSOR;
-
+void i2c_init(void)
+{
 	// Enable the high speed peripheral clock tree and the clock of the actual I2C peripheral
 	CMU_ClockEnable(cmuClock_HFPER, true);
 	CMU_ClockEnable(cmuClock_I2C0, true);
@@ -47,7 +44,6 @@ void i2c_init(void) {
 	//   send I2C slave reset pattern on SCL
 	for (uint8_t cnt = 0; cnt < 9; cnt++) {
 	    GPIO_PinOutSet(I2C_SCL_PORT, I2C_SCL_PIN);
-	    // TODO: delay?
 	    GPIO_PinOutClear(I2C_SCL_PORT, I2C_SCL_PIN);
 	}
 
@@ -65,27 +61,20 @@ void i2c_init(void) {
 		I2C0->CMD = I2C_CMD_ABORT;
 	}
 
-	// RXDATAV interrupt:
-	// See reference manual page 470
-	//	 Receive Data Valid Interrupt Flag
-	//   Set when data is available in the receive buffer. Cleared automatically when the receive buffer is read.
-
-	// NOTE: if we use emlib's I2C_TransferInit(), it will enable the interrupts for us
-
-	//I2C_IntClear(I2C0, I2C_IEN_RXDATAV);
+	// Start with interrupts disabled, we'll enable RXDATAV on demand
 	I2C0->IEN = 0;
-	//I2C_IntEnable(I2C0, I2C_IEN_RXDATAV);
 
-	// Allow peripheral to interrtupt the CPU
+	// Allow peripheral to interrupt the CPU
 	NVIC_ClearPendingIRQ(I2C0_IRQn);
 	NVIC_EnableIRQ(I2C0_IRQn);
-
 }
 
 void i2c_disable(void)
 {
+	// OK to disable I2C lines since the entire bus will be powered down
 	GPIO_PinModeSet(I2C_SCL_PORT, I2C_SCL_PIN, gpioModeDisabled, 0);
 	GPIO_PinModeSet(I2C_SDA_PORT, I2C_SDA_PIN, gpioModeDisabled, 0);
+	// I2C is the only one using the HF periph clock, so disable it too
 	CMU_ClockEnable(cmuClock_HFPER, false);
 	CMU_ClockEnable(cmuClock_I2C0, false);
 }
@@ -95,20 +84,18 @@ void I2C0_IRQHandler(void) {
 	// disable nested interrupts instead?
 	CORE_ATOMIC_IRQ_DISABLE();
 
-
 	uint32_t intr_flags;  // interrupt flags
 
 	// Record the pending interrupt flags and clear them to prevent an immediate
 	// retriggering of the interrupt.
 	intr_flags = I2C_IntGet(I2C0);
 
-	// call I2C_Transfer() to get status?
-
-	// RXDATAV cleared automatically when the receive buffer is read.
-	//   read and set global temp variable?
+	// RXDATAV interrupt:
+	// See reference manual page 470
+	//	 Receive Data Valid Interrupt Flag
+	//   Set when data is available in the receive buffer. Cleared automatically when the receive buffer is read.
 	if ( intr_flags & I2C_IF_RXDATAV ) {
-		//led_on(LED1);
-		//I2C_IntClear(I2C0, I2C_IEN_RXDATAV);
+		// Disable RX interrupt so we don't rerun the ISR until reading response in main loop
 		I2C_IntDisable(I2C0, I2C_IEN_RXDATAV);
 		event_flags |= EVENT_I2C_MSG;
 	}

@@ -3,6 +3,8 @@
 // Author      : Jeff Schornick
 // Toolchain   : GNU ARM v4.9.3
 
+#include <stdint.h>
+
 #include "si7021.h"
 #include "em_gpio.h"
 #include "em_i2c.h"
@@ -69,10 +71,6 @@ void si7021_read_user_reg()
 void si7021_request_temp()
 {
 
-	uint8_t temp_msb;
-	uint8_t temp_lsb;
-	uint16_t temp;
-
 	// TODO: make macro for read/write
 
 	// prime TX buf, wont' send until START
@@ -99,34 +97,17 @@ void si7021_request_temp()
 	// ~7ms wait during clock stretch, let interrupt handle it
 	return;
 
-	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
-	temp_msb = I2C0->RXDATA;  // auto-clears RXDATAV
-
-	// ack receiption of first byte
-	I2C0->CMD = I2C_CMD_ACK;
-
-	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
-	temp_lsb = I2C0->RXDATA;  // auto-clears RXDATAV
-
-	I2C0->CMD = I2C_CMD_NACK;
-	I2C0->CMD = I2C_CMD_STOP;
-
-	temp = (temp_msb << 8) + temp_lsb;
-
-	if( temp > 0 ) {
-	}
 }
 
-void si7021_read_temp()
+uint16_t si7021_read_temp()
 {
 	uint8_t temp_msb;
 	uint8_t temp_lsb;
-	uint16_t temp;
 
 	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
 	temp_msb = I2C0->RXDATA;  // auto-clears RXDATAV
 
-	// ack receiption of first byte
+	// ack reception of first byte
 	I2C0->CMD = I2C_CMD_ACK;
 
 	while ( !(I2C0->IF & I2C_IF_RXDATAV) ) {} ;
@@ -137,8 +118,7 @@ void si7021_read_temp()
 
 	temperature = (temp_msb << 8) + temp_lsb;
 
-	if( temp > 0 ) {
-	}
+	return temperature;
 
 }
 
