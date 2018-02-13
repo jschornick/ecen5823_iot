@@ -35,7 +35,7 @@ int main(void)
   initMcu();
   initBoard();
 
-  // Initialize stack and BGAPI using the example configuration from Silicon Labs
+  // Initialize BT stack and BGAPI using the example configuration from Silicon Labs
   //gecko_init(&config);
 
   // Create an overall block to force the MCU to stay in at least EM3
@@ -54,7 +54,8 @@ int main(void)
   // Repeating timer to wakeup every X ms to take a sample
   set_timer(0, WAKEUP_PERIOD_MS, TIMER_REPEAT, EVENT_SAMPLE_WAKEUP);
 
-  BSP_TraceProfilerSetup();
+  // Enable code correlation profiler for energy mode debugging
+  // BSP_TraceProfilerSetup();
 
   // The program is entirely event driven. Sleep immediately after events are serviced.
   while (1) {
@@ -67,7 +68,7 @@ int main(void)
 
 		  }
 		  if (event_flags & EVENT_SENSOR_READY) {
-			  // The sensor warmup timer has expired
+			  // The sensor has completed the warmup phase
 			  CLEAR_EVENT(EVENT_SENSOR_READY);
 			  i2c_init();             // Bring up the I2C peripheral and
 			  block_sleep_mode(EM2);  // stay in EM1 until the response is read
