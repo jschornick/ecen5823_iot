@@ -23,6 +23,8 @@
 #include "bg_types.h"
 #include "native_gecko.h"  // bare-metal BT stack API
 #include "gatt_db.h"
+#include "infrastructure.h"  // type conversion macros
+
 
 #include "sleep.h"
 
@@ -77,6 +79,41 @@ uint8_t boot_to_dfu;
 
 // Record converted temperature for easy debugging
 float tempC;
+
+
+void temp_update( uint16_t temp_data)
+{
+	// temperature_measurement characteristc (0x2A1C)
+	// https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature_measurement.xml
+	//  byte    0   :  flags       (0 = temp in C, no timestamp, no type)
+	//  bytes   1-4 :  temp_deg_C  (IEEE-11073 32-bit float)
+	//  bytes   5-8 :  temp_deg_F
+	//  bytes  9-12 :  timestamp
+	//  bytes  13-16:  temp_type
+
+	int32_t temp_mC;        // temperature in milli-celsius
+	uint8_t buffer[5];       // temporary buffer for indication data
+	uint8_t flags = 0x00;    // 0 = temp in C, no timestamp, no type
+	uint32_t temp_float;     // temperature in BLE FLOAT format
+	uint8_t *p_buf = buffer; // current position in buffer
+
+    // place flags at byte 0 in buffer
+	UINT8_TO_BITSTREAM(p_buf, flags);
+
+	// tempC   =  175.72 * TC / 65536 - 46.85
+	// temp_mC = 175720 * TC / 65536 - 46850
+	// temp_mC = 21965 * TC / 8192 - 46850
+	temp_mC = 21965L * temp_data / 8192 - 46850;
+
+	// Use built-in conversion routines to create BLE 32-bit FLOAT format
+	temp_float = FLT_TO_UINT32(temp_mC , -3);
+	// shift 4-bytes onto buffer
+	UINT32_TO_BITSTREAM(p_buf, temp_float);
+	// send BLE indication to all (0xFF) connections
+	gecko_cmd_gatt_server_send_characteristic_notification(
+	      0xFF, gattdb_temperature_measurement, 5, buffer);
+}
+
 
 int main(void)
 {
@@ -207,7 +244,10 @@ int main(void)
     	if (event_flags & EVENT_I2C_MSG) {
     			  // We've received an I2C response from the sensor (waiting in TX buffer)
     			  CLEAR_EVENT(EVENT_I2C_MSG);
-    			  tempC = (si7021_read_temp() * 175.72) / 65536 - 46.85;
+
+    			  uint16_t temp_data = si7021_read_temp();
+
+    			  tempC = (temp_data * 175.72) / 65536 - 46.85;
     			  //  cmd_gatt_server_send_characteristic_notification ??
     			  //  cmd_gatt_server_write_attribute_value ??
     			  if (tempC < LOW_TEMP_ALERT) {
@@ -215,6 +255,9 @@ int main(void)
     			  } else {
     				  led_off(LED1);
     			  }
+
+    			  temp_update(temp_data);
+
     			  //unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM2
     			  SLEEP_SleepBlockEnd(sleepEM2);
     			  i2c_disable();            // Put I2C and sensor into low-power mode
