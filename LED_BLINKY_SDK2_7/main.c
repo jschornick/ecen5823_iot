@@ -70,8 +70,8 @@ static const gecko_configuration_t config = {
 uint8_t boot_to_dfu;
 
 
-#define BLE_ADV_MIN_MS  337
-#define BLE_ADV_MAX_MS  337
+#define BLE_ADV_MIN_MS  100
+#define BLE_ADV_MAX_MS  100
 
 #define BLE_TICKS(ms)  ( (ms * 1000) / 625)
 
