@@ -9,6 +9,7 @@
 #include "em_cmu.h"
 #include "em_i2c.h"
 #include "em_gpio.h"
+#include "native_gecko.h"
 
 #include "gpio.h"
 #include "i2c.h"
@@ -90,4 +91,6 @@ void I2C0_IRQHandler(void) {
 	}
 
 	CORE_ATOMIC_IRQ_ENABLE();
+	gecko_external_signal(2);
+
 }

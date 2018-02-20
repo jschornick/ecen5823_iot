@@ -12,6 +12,8 @@
 #define LED_ON  1
 #define LED_OFF 0
 
+// NOTE: Should probably get these values from hal-config-board.h
+
 // LED0 on the starter kit board
 #define	LED0_port    gpioPortF
 #define LED0_pin     4

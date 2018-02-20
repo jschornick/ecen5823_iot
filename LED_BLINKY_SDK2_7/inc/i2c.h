@@ -23,6 +23,8 @@
 #define I2C_READ_OP   1
 #define I2C_WRITE_OP  0
 
+// NOTE: Should probably get these values from hal-config-board.h
+
 #define I2C_SCL_PORT  gpioPortC
 #define I2C_SCL_PIN   10
 #define I2C_SCL_LOC   14

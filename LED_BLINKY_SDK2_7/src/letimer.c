@@ -7,6 +7,8 @@
 #include "em_cmu.h"
 #include "em_core.h"  // atomics
 #include "em_letimer.h"
+#include "native_gecko.h"
+
 #include "led.h"   // LED definitions and output control
 #include "sleepmodes.h"
 #include "scheduler.h"
@@ -141,6 +143,7 @@ void LETIMER0_IRQHandler(void)
 {
 	uint32_t intr_flags;  // interrupt flags
 
+	// TODO: only disable timer IRQs?
 	CORE_ATOMIC_IRQ_DISABLE();
 
 	// Record the pending interrupt flags and clear them to prevent an immediate
@@ -175,4 +178,8 @@ void LETIMER0_IRQHandler(void)
 	}
 
 	CORE_ATOMIC_IRQ_ENABLE();
+
+	// TODO: use this instead of event_flags?
+	gecko_external_signal(1);
+
 }
