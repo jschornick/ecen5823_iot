@@ -39,10 +39,7 @@
 #define LOW_TEMP_ALERT 15.0
 
 // Period between samples in milliseconds
-#define WAKEUP_PERIOD_MS  1000
-
-// Overall lowerst energy mode. This may be raised by individual peripherals.
-//#define LOWEST_ENERGY_MODE 3
+#define WAKEUP_PERIOD_MS  4000
 
 // Max simultaneous BT connections
 #define MAX_CONNECTIONS 4
@@ -72,10 +69,24 @@ static const gecko_configuration_t config = {
 uint8_t boot_to_dfu;
 
 
-#define BLE_ADV_MIN_MS  100
-#define BLE_ADV_MAX_MS  100
+#define TX_POW_MIN -260     /* -26 dBm (per BGM121 datasheet) */
+#define TX_POW_MAX 80   /* 8 dBm */
 
-#define BLE_TICKS(ms)  ( (ms * 1000) / 625)
+// Set to 337
+#define BLE_ADV_MIN_MS  337
+#define BLE_ADV_MAX_MS  337
+#define BLE_CONN_IVAL_MIN_MS  75
+#define BLE_CONN_IVAL_MAX_MS  75
+#define BLE_SLAVE_LATENCY_MS  450
+#define BLE_SUPERVISOR_TIMEOUT_MS  2000
+
+#define BLE_ADV_VAL(ms)  ( (ms * 1000) / 625 )
+#define BLE_CONN_VAL(ms)  ( (ms * 1000) / 1250 )
+
+// Latency intervals the slave can skip based on maximum time in ms
+//   Ex: 450 max, intervals = 450 / 75 - 1 = 5
+// Subtract one since we could start at the very end of the "first" interval
+#define BLE_LATENCY_IVALS(ms) ( ms / BLE_CONN_IVAL_MAX_MS - 1 )
 
 // Record converted temperature for easy debugging
 float tempC;
@@ -115,8 +126,24 @@ void temp_update( uint16_t temp_data)
 }
 
 
+struct gecko_msg_system_set_tx_power_rsp_t * safe_set_tx_power(int16 power) {
+	struct gecko_msg_system_set_tx_power_rsp_t * rsp;
+	gecko_cmd_system_halt(1);
+	rsp = gecko_cmd_system_set_tx_power(power);
+	gecko_cmd_system_halt(0);
+	return rsp;
+}
+
+uint16 interval = 0;
+uint16 latency = 0;
+uint16 timeout = 0;
+int8 rssi = 0;
+int16 power = 0;
+
 int main(void)
 {
+
+
 
   // Initialize MCU core (clocks, etc) and board features (display, etc)
   // Must be called at the beginning of main in this order.
@@ -146,7 +173,6 @@ int main(void)
   // Enable code correlation profiler for energy mode debugging
   BSP_TraceProfilerSetup();
 
-
   while (1) {
     /* Event pointer for handling events */
     struct gecko_cmd_packet* evt;
@@ -162,13 +188,15 @@ int main(void)
        * Here the system is set to start advertising immediately after boot procedure. */
       case gecko_evt_system_boot_id:
 
+		  gecko_cmd_system_set_tx_power(0);  // start at 0 dBm
+
         /* Set advertising parameters. 100ms advertisement interval. All channels used.
          * The first two parameters are minimum and maximum advertising interval, both in
          * units of (milliseconds * 1.6). The third parameter '7' sets advertising on all channels. */
 
     	  // units are 625us
         //gecko_cmd_le_gap_set_adv_parameters(160, 160, 7);
-          gecko_cmd_le_gap_set_adv_parameters(BLE_TICKS(BLE_ADV_MIN_MS), BLE_TICKS(BLE_ADV_MAX_MS), 7);
+          gecko_cmd_le_gap_set_adv_parameters(BLE_ADV_VAL(BLE_ADV_MIN_MS), BLE_ADV_VAL(BLE_ADV_MAX_MS), 7);
 
         /* Start general advertising and enable connections. */
         gecko_cmd_le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable);
@@ -176,23 +204,54 @@ int main(void)
 
 
       case gecko_evt_le_connection_opened_id:
-    	  // new connection was opened, now set connection params?
-    	  // gecko_cmd_le_connection_set_parameters(uint8 connection, uint16 min_interval,
+    	  // new connection was opened, now set connection params
+    	  //gecko_cmd_le_connection_set_parameters(uint8 connection, uint16 min_interval,
     	  //                      uint16 max_interval, uint16 latency, uint16 timeout);
+       	  gecko_cmd_le_connection_set_parameters(
+       			evt->data.evt_le_connection_opened.connection,
+       			  BLE_CONN_VAL(BLE_CONN_IVAL_MIN_MS), BLE_CONN_VAL(BLE_CONN_IVAL_MAX_MS),
+				  BLE_LATENCY_IVALS(BLE_SLAVE_LATENCY_MS),
+				  //0,  // set latency to zero
+				  BLE_SUPERVISOR_TIMEOUT_MS / 10);
+
+       	  // check our signal strength and adjust as soon as possible
+       	  //  NOTE: it seems this always results in a very high RSSI, possibly due to
+       	  //     the client transmitting with high power at connection start
+       	  //gecko_cmd_le_connection_get_rssi( evt->data.evt_le_connection_opened.connection );
     	  break;
+
 
       case gecko_evt_le_connection_closed_id:
 
-        /* Check if need to boot to dfu mode */
-        if (boot_to_dfu) {
-          /* Enter to DFU OTA mode */
+		  gecko_cmd_system_set_tx_power(0);  // start at 0 dBm
+
+    	  /* Check if need to boot to dfu mode */
+
+    	  if (boot_to_dfu) {
+    		/* Enter to DFU OTA mode */
         	// how is this different than gecko_cmd_dfu_reset()?
-          gecko_cmd_system_reset(2);
-        } else {
-          /* Restart advertising after client has disconnected */
-          gecko_cmd_le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable);
-        }
-        break;
+            gecko_cmd_system_reset(2);
+          } else {
+            /* Restart advertising after client has disconnected */
+            gecko_cmd_le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable);
+          }
+          break;
+
+      // connection parameters have changed event
+      case gecko_evt_le_connection_parameters_id:
+
+      	  interval = evt->data.evt_le_connection_parameters.interval;
+      	  timeout = evt->data.evt_le_connection_parameters.timeout;
+      	  latency = evt->data.evt_le_connection_parameters.latency;
+      	  break;
+
+      // confirm of indication or characteristic updated by by client
+      	  // this is a reasonable opportunity to check RSSI according to Prof. Graham
+      case gecko_evt_gatt_server_characteristic_status_id:
+    	  gecko_cmd_le_connection_get_rssi( evt->data.evt_gatt_server_characteristic_status.connection );
+    	  break;
+
+
 
       /* Events related to OTA upgrading
          ----------------------------------------------------------------------------- */
@@ -216,15 +275,39 @@ int main(void)
         break;
 
       case gecko_evt_le_connection_rssi_id:
-    	  // command to get rssi is complete, now set power?
-    	  //    response has rssi value
-    	  // do we need to call gecko_cmd_le_connection_get_rssi(uint8 connection) on a schedule?
-    	  //    use letimer interrupt?
+		  // power is in units of 0.1 dBm
+		  //   So power = -50 ==> -5 dBm
+    	  rssi = evt->data.evt_le_connection_rssi.rssi;
+    	  if ( rssi > -35 ) {
+    		  power = TX_POW_MIN;
+    	  } else if ( rssi > -45 ) {
+    		  power = -200;
+    	  } else if ( rssi > -55 ) {
+    		  power = -150;
+    	  } else if ( rssi > -65 ) {
+    		  power = -50;
+    	  } else if ( rssi > -75 ) {
+    		  power = 0;
+    	  } else if ( rssi > -85 ) {
+    		  power = 50;
+    	  } else {
+    		  power = TX_POW_MAX;
+    	  }
+
+    	  // Per the SiLabs BT API reference, we can't be advertising, scanning, or connected
+    	  // So halt the radio, change power, and restart it before anyone notices.
+    	  // Also block EM2 since halt puts us to sleep
+		  //SLEEP_SleepBlockBegin(sleepEM2);
+    	  safe_set_tx_power(power);
+    	  //gecko_cmd_system_halt(1);
+		  //gecko_cmd_system_set_tx_power(power);
+    	  //gecko_cmd_system_halt(0);
+		  //SLEEP_SleepBlockEnd(sleepEM2);
 
     	  break;
 
       case gecko_evt_system_external_signal_id:
-    	// TODO: check bits of  evt->data.evt_system_external_signal.extsignals
+    	// TODO: switch event system to use bits of  evt->data.evt_system_external_signal.extsignals
 
     	if ( CHECK_EVENT(EVENT_SAMPLE_WAKEUP) ) {
     			  // We've woken up out of our primary sleep loop
@@ -247,6 +330,11 @@ int main(void)
 
     			  uint16_t temp_data = si7021_read_temp();
 
+    			  //unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM2
+    			  SLEEP_SleepBlockEnd(sleepEM2);
+    			  i2c_disable();            // Put I2C and sensor into low-power mode
+    			  si7021_poweroff();
+
     			  tempC = (temp_data * 175.72) / 65536 - 46.85;
     			  //  cmd_gatt_server_send_characteristic_notification ??
     			  //  cmd_gatt_server_write_attribute_value ??
@@ -255,13 +343,8 @@ int main(void)
     			  } else {
     				  led_off(LED1);
     			  }
-
     			  temp_update(temp_data);
 
-    			  //unblock_sleep_mode(EM2);  // done reading I2C, sleep down to EM2
-    			  SLEEP_SleepBlockEnd(sleepEM2);
-    			  i2c_disable();            // Put I2C and sensor into low-power mode
-    			  si7021_poweroff();
     	}
     	break;
 
