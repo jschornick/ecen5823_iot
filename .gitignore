@@ -10,3 +10,4 @@ BgBuild_Log.txt
 *.mk
 makefile
 *.swp
+*.bak
