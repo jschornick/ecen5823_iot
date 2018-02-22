@@ -4,6 +4,11 @@
 // This program uses an interrupt-triggered event loop to periodically read an
 // I2C temperature sensor, while remaining in a low-power state as much as possible.
 //
+// A standard BLE Health Thermometer service is advertised and temperature measurment
+// indications are send every time the temperature sensor is read.
+//
+// TX power is adjusted based on the RSSI of the connection.
+//
 // An LED alert is triggered when the temperature is below the configured threshold.
 //
 // Author      : Jeff Schornick
@@ -24,11 +29,8 @@
 #include "native_gecko.h"  // bare-metal BT stack API
 #include "gatt_db.h"
 #include "infrastructure.h"  // type conversion macros
-
-
 #include "sleep.h"
 
-//#include "sleepmodes.h"
 #include "led.h"
 #include "i2c.h"
 #include "si7021.h"
@@ -68,7 +70,6 @@ static const gecko_configuration_t config = {
 // Flag for indicating DFU Reset must be performed
 uint8_t boot_to_dfu;
 
-
 #define TX_POW_MIN -260     /* -26 dBm (per BGM121 datasheet) */
 #define TX_POW_MAX 80   /* 8 dBm */
 
@@ -92,6 +93,14 @@ uint8_t boot_to_dfu;
 float tempC;
 
 
+// Function: temp_update
+//
+// This routine performs and update to the temperature measurement characteristic
+// based on the raw value read from the temperature sensor. Conversion is done
+// from this format to the 4-byte format expected by the clients.
+//
+// param[in] temp_data - The raw temperature reading from the Si7021
+//
 void temp_update( uint16_t temp_data)
 {
 	// temperature_measurement characteristc (0x2A1C)
@@ -125,7 +134,15 @@ void temp_update( uint16_t temp_data)
 	      0xFF, gattdb_temperature_measurement, 5, buffer);
 }
 
-
+// Function safe_set_tx_power
+//
+// Per the Gecko BT API specification, it is not safe to change the TX
+// power during any RF operations. The recommended method to do this safely
+// is to halt the radio, change power, then restart the radio. If done quickly,
+// this does not disturb communications.
+//
+// param[in] power - The power to set in 0.1 dBm units.
+//
 struct gecko_msg_system_set_tx_power_rsp_t * safe_set_tx_power(int16 power) {
 	struct gecko_msg_system_set_tx_power_rsp_t * rsp;
 	gecko_cmd_system_halt(1);
@@ -133,6 +150,7 @@ struct gecko_msg_system_set_tx_power_rsp_t * safe_set_tx_power(int16 power) {
 	gecko_cmd_system_halt(0);
 	return rsp;
 }
+
 
 uint16 interval = 0;
 uint16 latency = 0;
@@ -187,23 +205,18 @@ int main(void)
 
 		  gecko_cmd_system_set_tx_power(0);  // start at 0 dBm
 
-        /* Set advertising parameters. 100ms advertisement interval. All channels used.
-         * The first two parameters are minimum and maximum advertising interval, both in
-         * units of (milliseconds * 1.6). The third parameter '7' sets advertising on all channels. */
-
-    	  // units are 625us
-        //gecko_cmd_le_gap_set_adv_parameters(160, 160, 7);
+          // Set advertising parameters.
+      	  // Connection time units are 625us
           gecko_cmd_le_gap_set_adv_parameters(BLE_ADV_VAL(BLE_ADV_MIN_MS), BLE_ADV_VAL(BLE_ADV_MAX_MS), 7);
 
-        /* Start general advertising and enable connections. */
-        gecko_cmd_le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable);
-        break;
+          /* Start general advertising and enable connections. */
+          gecko_cmd_le_gap_set_mode(le_gap_general_discoverable, le_gap_undirected_connectable);
+          break;
 
 
       case gecko_evt_le_connection_opened_id:
+
     	  // new connection was opened, now set connection params
-    	  //gecko_cmd_le_connection_set_parameters(uint8 connection, uint16 min_interval,
-    	  //                      uint16 max_interval, uint16 latency, uint16 timeout);
        	  gecko_cmd_le_connection_set_parameters(
        			evt->data.evt_le_connection_opened.connection,
        			  BLE_CONN_VAL(BLE_CONN_IVAL_MIN_MS), BLE_CONN_VAL(BLE_CONN_IVAL_MAX_MS),
@@ -243,15 +256,11 @@ int main(void)
       	  break;
 
       // confirm of indication or characteristic updated by by client
-      	  // this is a reasonable opportunity to check RSSI according to Prof. Graham
+      // this is a reasonable opportunity to check RSSI according to Prof. Graham
       case gecko_evt_gatt_server_characteristic_status_id:
     	  gecko_cmd_le_connection_get_rssi( evt->data.evt_gatt_server_characteristic_status.connection );
     	  break;
 
-
-
-      /* Events related to OTA upgrading
-         ----------------------------------------------------------------------------- */
 
       /* Check if the user-type OTA Control Characteristic was written.
        * If ota_control was written, boot the device into Device Firmware Upgrade (DFU) mode. */
@@ -291,15 +300,7 @@ int main(void)
     		  power = TX_POW_MAX;
     	  }
 
-    	  // Per the SiLabs BT API reference, we can't be advertising, scanning, or connected
-    	  // So halt the radio, change power, and restart it before anyone notices.
-    	  // Also block EM2 since halt puts us to sleep
-		  //SLEEP_SleepBlockBegin(sleepEM2);
     	  safe_set_tx_power(power);
-    	  //gecko_cmd_system_halt(1);
-		  //gecko_cmd_system_set_tx_power(power);
-    	  //gecko_cmd_system_halt(0);
-		  //SLEEP_SleepBlockEnd(sleepEM2);
 
     	  break;
 
@@ -351,9 +352,3 @@ int main(void)
   }
 
 }
-
-
-  // native_gecko.h:
-  //     gecko_cmd_gatt_server_send_characteristic_notification(uint8 connection,uint16 characteristic,uint8 value_len, const uint8* value_data)
-  //     gecko_cmd_gatt_server_send_characteristic_notification(0xFF, gattdb_temp_measurement, 5, htmTempBuffer);
-
