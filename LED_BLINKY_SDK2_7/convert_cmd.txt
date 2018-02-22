@@ -1,0 +1,2 @@
+# sc convert bootloader-storage-internal-ble-combined.s37 apploader-signed.gbl application-signed.gbl --outfile bootloader+apploader+app.hex
+

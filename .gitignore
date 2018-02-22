@@ -11,3 +11,5 @@ BgBuild_Log.txt
 makefile
 *.swp
 *.bak
+
+output_gbl

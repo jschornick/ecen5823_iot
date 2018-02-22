@@ -154,9 +154,6 @@ int main(void)
   // Initialize BT stack and individual stack components
   gecko_init(&config);
 
-  // Create an overall block to force the MCU to stay in at least EM3
-  //block_sleep_mode(LOWEST_ENERGY_MODE+1);
-
   // LEDs only active during temperature alert
   led_init();
   led_off(LED0);
